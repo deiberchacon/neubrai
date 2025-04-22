@@ -1,4 +1,4 @@
-import { ComputeTokensResponse, GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     async start(controller) {
       for await (const chunk of response) {
         const textEncoder = new TextEncoder();
-        const encodedChunk = textEncoder.encode(chunk.text + '\n');
+        const encodedChunk = textEncoder.encode(chunk.text);
 
         // Enqueue the chunk to the stream
         controller.enqueue(encodedChunk);
