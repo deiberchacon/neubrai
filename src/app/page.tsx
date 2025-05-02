@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, ReactHTMLElement } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from '../types/common.types';
 import { SendHorizontal } from 'lucide-react';
 import ChatMessageItem from '../components/ChatMessageItem';
@@ -12,23 +12,36 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [incomingMessage, setIncomingMessage] = useState<string>('');
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollableRef = useRef<HTMLDivElement>(null);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null);
+  const minScrollOffset = useRef<number>(0);
+  const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
 
   useEffect(() => {
-    const scrollToBottom = () => {
-      const container = chatContainerRef.current;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    };
+    if (messages.length && messages[messages.length - 1].role === 'user') {
+      // Calculate the minimum scroll offset
+      // to keep the last user message in view
+      minScrollOffset.current =
+        window.innerHeight -
+        (lastUserMessageRef.current?.offsetHeight ?? 0) -
+        318;
 
-    scrollToBottom();
-  }, [messages, incomingMessage]);
+      // Scroll to the last user message
+      scrollableRef.current?.scrollTo({
+        top:
+          scrollableRef.current.scrollHeight +
+          scrollableRef.current.scrollTop +
+          minScrollOffset.current,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!prompt) return;
+    if (!prompt || isLoading || isStreaming) return;
 
     setPrompt('');
     setIsLoading(true);
@@ -42,6 +55,7 @@ const Home = () => {
       body: JSON.stringify({ prompt }),
     });
 
+    // Check if the response is not successful
     if (!response.ok) {
       setIsLoading(false);
       setMessages(prev => [...prev, { role: 'assistant', content: 'Error' }]);
@@ -61,19 +75,21 @@ const Home = () => {
     }
 
     // Stream the response
-    const reader = response.body
+    readerRef.current = response.body
       .pipeThrough(new TextDecoderStream())
       .getReader();
 
+    // const reader = readerRef.current;
+
     // Handle the stream
-    if (reader) {
+    if (readerRef.current) {
       setIsLoading(false);
       setIsStreaming(true);
 
       let message = '';
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await readerRef.current.read();
 
         // If the stream is done, add the message to the chat
         // and reset the incoming message
@@ -100,29 +116,55 @@ const Home = () => {
   };
 
   return (
-    <div className="grid h-screen grid-cols-1 grid-rows-[auto_1fr] overflow-y-auto bg-white">
+    <div className="mt-16 mb-[182px] grid grid-cols-1 bg-white">
       <Header />
       <main
-        className="mt-16 flex flex-col overflow-y-auto px-4 pt-4 pb-[182px]"
-        ref={chatContainerRef}
+        ref={scrollableRef}
+        className="scrollbar flex h-[calc(100vh-205px)] flex-col overflow-y-auto p-4"
       >
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
+        <div className="mx-auto mb-12 flex w-full max-w-2xl flex-col gap-3">
           {/* Display the chat messages */}
           {messages.map((message, index) => (
-            <ChatMessageItem key={index} message={message} />
+            <ChatMessageItem
+              key={index}
+              message={message}
+              offset={minScrollOffset.current}
+              ref={
+                message.role === 'user' && index === messages.length - 1
+                  ? lastUserMessageRef
+                  : null
+              }
+              isLast={
+                message.role === 'assistant' && index === messages.length - 1
+              }
+            />
           ))}
 
           {/* Display the incoming message as it streams */}
           {incomingMessage && (
             <ChatMessageItem
-              message={{ role: 'assistant', content: incomingMessage }}
+              message={{
+                role: 'assistant',
+                content: incomingMessage,
+              }}
+              isLast={true}
+              offset={minScrollOffset.current}
+            />
+          )}
+
+          {isLoading && (
+            <ChatMessageItem
+              message={{
+                role: 'assistant',
+                content: 'Thinking...',
+              }}
+              isLast={true}
+              offset={minScrollOffset.current}
             />
           )}
 
           {isStreaming && <div>Typing...</div>}
         </div>
-
-        {isLoading && <div>Thinking...</div>}
 
         <div className="fixed right-0 bottom-0 left-0 z-10 flex w-full justify-center bg-gradient-to-b from-transparent from-0% to-white to-40% px-4 pt-6 pb-8">
           <form
@@ -141,13 +183,30 @@ const Home = () => {
                 }
               }}
             />
-            <button
-              className="cursor-pointer rounded-full bg-gray-100 p-3 transition-colors duration-200 ease-in-out hover:bg-gray-200"
-              disabled={!prompt.trim().length}
-              type="submit"
-            >
-              <SendHorizontal className="size-5 text-gray-500" />
-            </button>
+            {!isLoading && !isStreaming ? (
+              // Send button to submit the prompt
+              <button
+                className={`rounded-full p-3 transition-colors duration-200 ease-in-out ${!prompt.trim().length ? 'bg-gray-100 text-gray-500' : 'cursor-pointer bg-sky-100 text-gray-700 hover:text-gray-950'}`}
+                disabled={!prompt.trim().length}
+                type="submit"
+              >
+                <SendHorizontal className="size-5" />
+              </button>
+            ) : (
+              // Cancel button to stop the streaming
+              <button
+                className="size-[44px] cursor-pointer rounded-full bg-sky-100 text-gray-700 transition-colors duration-200 ease-in-out hover:text-gray-950"
+                onClick={() => {
+                  if (readerRef.current) {
+                    readerRef.current.cancel();
+                    setIsStreaming(false);
+                    setIncomingMessage('');
+                  }
+                }}
+              >
+                ■
+              </button>
+            )}
           </form>
         </div>
       </main>

@@ -1,1 +1,22 @@
 @import 'tailwindcss';
+
+.scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Example of a styled scrollbar without arrows */
+.scrollbar::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent rounded-full;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
