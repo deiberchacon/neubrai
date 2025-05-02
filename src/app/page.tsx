@@ -122,50 +122,64 @@ const Home = () => {
         ref={scrollableRef}
         className="scrollbar flex h-[calc(100vh-205px)] flex-col overflow-y-auto p-4"
       >
-        <div className="mx-auto mb-12 flex w-full max-w-2xl flex-col gap-3">
-          {/* Display the chat messages */}
-          {messages.map((message, index) => (
-            <ChatMessageItem
-              key={index}
-              message={message}
-              offset={minScrollOffset.current}
-              ref={
-                message.role === 'user' && index === messages.length - 1
-                  ? lastUserMessageRef
-                  : null
-              }
-              isLast={
-                message.role === 'assistant' && index === messages.length - 1
-              }
-            />
-          ))}
+        {messages.length ? (
+          <div className="mx-auto mb-12 flex w-full max-w-2xl flex-col gap-3">
+            {/* Display the chat messages */}
+            {messages.map((message, index) => (
+              <ChatMessageItem
+                key={index}
+                message={message}
+                offset={minScrollOffset.current}
+                ref={
+                  message.role === 'user' && index === messages.length - 1
+                    ? lastUserMessageRef
+                    : null
+                }
+                isLast={
+                  message.role === 'assistant' && index === messages.length - 1
+                }
+              />
+            ))}
 
-          {/* Display the incoming message as it streams */}
-          {incomingMessage && (
-            <ChatMessageItem
-              message={{
-                role: 'assistant',
-                content: incomingMessage,
-              }}
-              isLast={true}
-              offset={minScrollOffset.current}
-            />
-          )}
+            {/* Display the incoming message as it streams */}
+            {incomingMessage && (
+              <div>
+                {isStreaming && (
+                  <div className="mb-2 font-mono text-gray-500">Typing...</div>
+                )}
+                <ChatMessageItem
+                  message={{
+                    role: 'assistant',
+                    content: incomingMessage,
+                  }}
+                  isLast={true}
+                  offset={minScrollOffset.current}
+                />
+              </div>
+            )}
 
-          {isLoading && (
-            <ChatMessageItem
-              message={{
-                role: 'assistant',
-                content: 'Thinking...',
-              }}
-              isLast={true}
-              offset={minScrollOffset.current}
-            />
-          )}
+            {isLoading && (
+              <ChatMessageItem
+                message={{
+                  role: 'assistant',
+                  content: 'Thinking...',
+                }}
+                isLast={true}
+                offset={minScrollOffset.current}
+                isLoading={isLoading}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="mx-auto flex h-full w-full max-w-2xl items-center justify-center">
+            <h1 className="font-mono text-5xl font-bold text-sky-800">
+              Hello.
+            </h1>
+            {/* <p className="text-gray-500">Ask me anything...</p> */}
+          </div>
+        )}
 
-          {isStreaming && <div>Typing...</div>}
-        </div>
-
+        {/* Input form for the user to type their message */}
         <div className="fixed right-0 bottom-0 left-0 z-10 flex w-full justify-center bg-gradient-to-b from-transparent from-0% to-white to-40% px-4 pt-6 pb-8">
           <form
             onSubmit={handleSubmit}

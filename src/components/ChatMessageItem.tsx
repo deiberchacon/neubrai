@@ -9,10 +9,11 @@ interface ChatMessageItemProps {
   isLast?: boolean;
   ref?: React.Ref<HTMLDivElement>;
   offset?: number;
+  isLoading?: boolean;
 }
 
 const ChatMessageItem = memo(
-  ({ message, isLast, ref, offset }: ChatMessageItemProps) => {
+  ({ message, isLast, ref, offset, isLoading }: ChatMessageItemProps) => {
     return (
       <div
         ref={ref}
@@ -20,7 +21,7 @@ const ChatMessageItem = memo(
         className={
           message.role === 'user'
             ? 'mb-4 w-full max-w-96 self-end rounded-tl-4xl rounded-b-4xl bg-sky-100 px-5 py-3'
-            : 'w-full'
+            : `w-full ${isLoading && 'mb-2 font-mono text-gray-500'}`
         }
       >
         {message.role === 'assistant' ? (
