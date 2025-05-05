@@ -49,16 +49,24 @@ const Home = () => {
     // Add user message to the chat
     setMessages(prev => [...prev, { role: 'user', content: prompt }]);
 
+    // Chat history for Multi-turn conversations
+    const history = messages.map(message => {
+      return {
+        role: message.role,
+        parts: [{ text: message.content }],
+      };
+    });
+
     // Call the API route
     const response = await fetch('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, history }),
     });
 
     // Check if the response is not successful
     if (!response.ok) {
       setIsLoading(false);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Error' }]);
+      setMessages(prev => [...prev, { role: 'model', content: 'Error' }]);
       console.error('Error:', response.statusText);
       return;
     }
@@ -68,7 +76,7 @@ const Home = () => {
       setIsStreaming(false);
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: "Sorry I can't answer in this moment" },
+        { role: 'model', content: "Sorry I can't answer in this moment" },
       ]);
 
       return;
@@ -78,8 +86,6 @@ const Home = () => {
     readerRef.current = response.body
       .pipeThrough(new TextDecoderStream())
       .getReader();
-
-    // const reader = readerRef.current;
 
     // Handle the stream
     if (readerRef.current) {
@@ -94,10 +100,7 @@ const Home = () => {
         // If the stream is done, add the message to the chat
         // and reset the incoming message
         if (done) {
-          setMessages(prev => [
-            ...prev,
-            { role: 'assistant', content: message },
-          ]);
+          setMessages(prev => [...prev, { role: 'model', content: message }]);
 
           setIsStreaming(false);
           setIncomingMessage('');
@@ -136,7 +139,7 @@ const Home = () => {
                     : null
                 }
                 isLast={
-                  message.role === 'assistant' && index === messages.length - 1
+                  message.role === 'model' && index === messages.length - 1
                 }
               />
             ))}
@@ -149,7 +152,7 @@ const Home = () => {
                 )}
                 <ChatMessageItem
                   message={{
-                    role: 'assistant',
+                    role: 'model',
                     content: incomingMessage,
                   }}
                   isLast={true}
@@ -161,7 +164,7 @@ const Home = () => {
             {isLoading && (
               <ChatMessageItem
                 message={{
-                  role: 'assistant',
+                  role: 'model',
                   content: 'Thinking...',
                 }}
                 isLast={true}

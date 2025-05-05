@@ -24,7 +24,7 @@ const ChatMessageItem = memo(
             : `w-full ${isLoading && 'mb-2 font-mono text-gray-500'}`
         }
       >
-        {message.role === 'assistant' ? (
+        {message.role === 'model' ? (
           <Markdown
             components={{
               code({ node, inline, className, children, ...rest }: any) {

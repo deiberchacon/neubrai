@@ -1,5 +1,4 @@
 export interface ChatMessage {
-  isLast?: boolean;
-  role: 'user' | 'assistant';
+  role: 'user' | 'model';
   content: string;
 }

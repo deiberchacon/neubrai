@@ -10,18 +10,24 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
  * @returns ReadableStream response
  */
 export async function POST(req: Request) {
-  const { prompt: contents } = await req.json();
+  const { prompt: message, history } = await req.json();
 
-  // Call the Google Gemini API to generate content stream
-  const response = await ai.models.generateContentStream({
+  // Call the Google Gemini API to create a chat session
+  const chat = ai.chats.create({
     model: 'gemini-2.0-flash-001',
-    contents,
+    history: history,
+    config: {
+      systemInstruction: 'Your name is Neubrai. Act as a human brain',
+    },
   });
+
+  // Send chat stream message to the API
+  const messageStream = await chat.sendMessageStream({ message });
 
   // Create a ReadableStream to stream the response
   const stream = new ReadableStream({
     async start(controller) {
-      for await (const chunk of response) {
+      for await (const chunk of messageStream) {
         const textEncoder = new TextEncoder();
         const encodedChunk = textEncoder.encode(chunk.text);
 
