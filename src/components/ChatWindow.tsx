@@ -1,129 +1,40 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
-import { ChatMessage } from '../types/common.types';
+import { useRef, useState } from 'react';
+import { useScrollToLastMessage } from '@/hooks/use-scroll-to-last-message';
+import { useChatStream } from '@/hooks/use-chat-stream';
+
 import ChatMessageItem from './ChatMessageItem';
 import ChatInput from './ChatInput';
 import ChatStartScreen from './ChatStartScreen';
 
-const ChatWindow: React.FC = () => {
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [incomingMessage, setIncomingMessage] = useState<string>('');
+import { ChatMessage } from '../types/common.types';
 
-  const scrollableRef = useRef<HTMLDivElement>(null);
-  const lastUserMessageRef = useRef<HTMLDivElement>(null);
-  const minScrollOffset = useRef<number>(0);
-  const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
+const ChatWindow: React.FC = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { startStream, cancelStream, isStreaming, isLoading, incomingMessage } =
+    useChatStream(setMessages);
+
+  const scrollableRef = useRef<HTMLDivElement>(null!);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null!);
+  // const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
 
   // When a new user message is added, scroll to that message
-  useEffect(() => {
-    if (messages.length && messages[messages.length - 1].role === 'user') {
-      // Calculate the minimum scroll offset
-      // to keep the last user message in view
-      minScrollOffset.current =
-        window.innerHeight -
-        (lastUserMessageRef.current?.offsetHeight ?? 0) -
-        318;
-
-      // Scroll to the last user message
-      scrollableRef.current?.scrollTo({
-        top:
-          scrollableRef.current.scrollHeight +
-          scrollableRef.current.scrollTop +
-          minScrollOffset.current,
-        behavior: 'smooth',
-      });
-    }
-  }, [messages]);
+  const { minScrollOffset } = useScrollToLastMessage(
+    messages,
+    scrollableRef,
+    lastUserMessageRef
+  );
 
   // Handler for sending a message
   const handleSendMessage = async (prompt: string) => {
-    if (isLoading || isStreaming) return;
-
-    setIsLoading(true);
-
-    // Add user message to the chat
-    setMessages(prev => [...prev, { role: 'user', content: prompt }]);
-
-    try {
-      // Chat history for Multi-turn conversations
-      const history = messages.map(message => {
-        return {
-          role: message.role,
-          parts: [{ text: message.content }],
-        };
-      });
-
-      // Call the API route
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({ prompt, history }),
-      });
-
-      // Check if the response is not successful
-      if (!response.body || !response.ok) {
-        throw new Error(response.statusText);
-      }
-
-      // Stream the response
-      readerRef.current = response.body
-        .pipeThrough(new TextDecoderStream())
-        .getReader();
-
-      // Handle the stream
-      if (readerRef.current) {
-        setIsLoading(false);
-        setIsStreaming(true);
-
-        let message = '';
-
-        // Read the stream until it's done
-        while (true) {
-          const { done, value } = await readerRef.current.read();
-
-          // If the stream is done, add the message to the chat
-          // and reset the incoming message
-          if (done) {
-            setMessages(prev => [...prev, { role: 'model', content: message }]);
-
-            setIsStreaming(false);
-            setIncomingMessage('');
-
-            break;
-          }
-
-          // If the stream is not done, append the value to the message
-          // and set the incoming message
-          if (value) {
-            message += value;
-            setIncomingMessage(message);
-          }
-        }
-      }
-    } catch (error: any) {
-      setMessages(prev => [
-        ...prev,
-        { role: 'model', content: "Sorry I can't answer in this moment" },
-      ]);
-
-      setIsStreaming(false);
-      setIsLoading(false);
-      setIncomingMessage('');
-
-      console.error('Error:', error?.message || error);
-    }
+    // Stream the message
+    startStream(prompt, messages);
   };
 
   // Cancel the stream and reset the state
   const handleCancelStream = () => {
-    if (readerRef.current) {
-      readerRef.current.cancel();
-      setIsStreaming(false);
-      setIsLoading(false);
-      setIncomingMessage('');
-    }
+    cancelStream();
   };
 
   return (
