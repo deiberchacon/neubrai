@@ -14,6 +14,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [prompt, setPrompt] = useState<string>('');
   const hasPrompt = prompt.trim().length;
 
+  // Handler for submitting the prompt
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();

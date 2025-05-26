@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from '../types/common.types';
 import ChatMessageItem from './ChatMessageItem';
 import ChatInput from './ChatInput';
+import ChatStartScreen from './ChatStartScreen';
 
 const ChatWindow: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
@@ -16,6 +17,7 @@ const ChatWindow: React.FC = () => {
   const minScrollOffset = useRef<number>(0);
   const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
 
+  // When a new user message is added, scroll to that message
   useEffect(() => {
     if (messages.length && messages[messages.length - 1].role === 'user') {
       // Calculate the minimum scroll offset
@@ -36,6 +38,7 @@ const ChatWindow: React.FC = () => {
     }
   }, [messages]);
 
+  // Handler for sending a message
   const handleSendMessage = async (prompt: string) => {
     if (isLoading || isStreaming) return;
 
@@ -44,72 +47,81 @@ const ChatWindow: React.FC = () => {
     // Add user message to the chat
     setMessages(prev => [...prev, { role: 'user', content: prompt }]);
 
-    // Chat history for Multi-turn conversations
-    const history = messages.map(message => {
-      return {
-        role: message.role,
-        parts: [{ text: message.content }],
-      };
-    });
+    try {
+      // Chat history for Multi-turn conversations
+      const history = messages.map(message => {
+        return {
+          role: message.role,
+          parts: [{ text: message.content }],
+        };
+      });
 
-    // Call the API route
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      body: JSON.stringify({ prompt, history }),
-    });
+      // Call the API route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ prompt, history }),
+      });
 
-    // Check if the response is not successful
-    if (!response.body || !response.ok) {
-      setIsStreaming(false);
+      // Check if the response is not successful
+      if (!response.body || !response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      // Stream the response
+      readerRef.current = response.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
+
+      // Handle the stream
+      if (readerRef.current) {
+        setIsLoading(false);
+        setIsStreaming(true);
+
+        let message = '';
+
+        // Read the stream until it's done
+        while (true) {
+          const { done, value } = await readerRef.current.read();
+
+          // If the stream is done, add the message to the chat
+          // and reset the incoming message
+          if (done) {
+            setMessages(prev => [...prev, { role: 'model', content: message }]);
+
+            setIsStreaming(false);
+            setIncomingMessage('');
+
+            break;
+          }
+
+          // If the stream is not done, append the value to the message
+          // and set the incoming message
+          if (value) {
+            message += value;
+            setIncomingMessage(message);
+          }
+        }
+      }
+    } catch (error: any) {
       setMessages(prev => [
         ...prev,
         { role: 'model', content: "Sorry I can't answer in this moment" },
       ]);
 
-      console.error('Error:', response.statusText);
-      return;
-    }
-
-    // Stream the response
-    readerRef.current = response.body
-      .pipeThrough(new TextDecoderStream())
-      .getReader();
-
-    // Handle the stream
-    if (readerRef.current) {
+      setIsStreaming(false);
       setIsLoading(false);
-      setIsStreaming(true);
+      setIncomingMessage('');
 
-      let message = '';
-
-      while (true) {
-        const { done, value } = await readerRef.current.read();
-
-        // If the stream is done, add the message to the chat
-        // and reset the incoming message
-        if (done) {
-          setMessages(prev => [...prev, { role: 'model', content: message }]);
-
-          setIsStreaming(false);
-          setIncomingMessage('');
-
-          break;
-        }
-
-        // If the stream is not done, append the value to the message
-        // and set the incoming message
-        if (value) {
-          message += value;
-          setIncomingMessage(message);
-        }
-      }
+      console.error('Error:', error?.message || error);
     }
   };
 
+  // Cancel the stream and reset the state
   const handleCancelStream = () => {
     if (readerRef.current) {
       readerRef.current.cancel();
       setIsStreaming(false);
+      setIsLoading(false);
       setIncomingMessage('');
     }
   };
@@ -167,9 +179,7 @@ const ChatWindow: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="mx-auto flex h-full w-full max-w-2xl items-center justify-center">
-          <h1 className="font-mono text-3xl text-sky-800">Hello.</h1>
-        </div>
+        <ChatStartScreen />
       )}
 
       {/* Input form for the user to type their message */}
