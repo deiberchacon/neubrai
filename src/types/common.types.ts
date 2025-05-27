@@ -24,6 +24,15 @@ export interface ChatMessageItemProps {
   isLoading?: boolean;
 }
 
+export interface ChatMessageListProps {
+  messages: ChatMessage[];
+  lastUserMessageRef: React.RefObject<HTMLDivElement>;
+  minScrollOffset: React.RefObject<number>;
+  incomingMessage?: string;
+  isStreaming: boolean;
+  isLoading: boolean;
+}
+
 /**
  * Props for the ChatInput component.
  * @property {boolean} isLoading - Whether a message is being sent or processed.

@@ -4,20 +4,22 @@ import { useRef, useState } from 'react';
 import { useScrollToLastMessage } from '@/hooks/use-scroll-to-last-message';
 import { useChatStream } from '@/hooks/use-chat-stream';
 
-import ChatMessageItem from './ChatMessageItem';
-import ChatInput from './ChatInput';
-import ChatStartScreen from './ChatStartScreen';
-
+// Types
 import { ChatMessage } from '../types/common.types';
+
+// Components
+import ChatInput from './ChatInput';
+import ChatMessageList from './ChatMessageList';
+import ChatStartScreen from './ChatStartScreen';
 
 const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const { startStream, cancelStream, isStreaming, isLoading, incomingMessage } =
-    useChatStream(setMessages);
-
   const scrollableRef = useRef<HTMLDivElement>(null!);
   const lastUserMessageRef = useRef<HTMLDivElement>(null!);
-  // const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
+
+  // Handle chat streaming
+  const { startStream, cancelStream, isStreaming, isLoading, incomingMessage } =
+    useChatStream(setMessages);
 
   // When a new user message is added, scroll to that message
   const { minScrollOffset } = useScrollToLastMessage(
@@ -28,7 +30,6 @@ const ChatWindow: React.FC = () => {
 
   // Handler for sending a message
   const handleSendMessage = async (prompt: string) => {
-    // Stream the message
     startStream(prompt, messages);
   };
 
@@ -42,54 +43,18 @@ const ChatWindow: React.FC = () => {
       ref={scrollableRef}
       className="scrollbar flex h-[calc(100vh-205px)] flex-col overflow-y-auto p-4"
     >
-      {/* Message list */}
       {messages.length ? (
-        <div className="mx-auto mb-12 flex w-full max-w-2xl flex-col gap-3">
-          {/* Display the chat messages */}
-          {messages.map((message, index) => (
-            <ChatMessageItem
-              key={index}
-              message={message}
-              offset={minScrollOffset.current}
-              ref={
-                message.role === 'user' && index === messages.length - 1
-                  ? lastUserMessageRef
-                  : null
-              }
-              isLast={message.role === 'model' && index === messages.length - 1}
-            />
-          ))}
-
-          {/* Display the incoming message as it streams */}
-          {incomingMessage && (
-            <div>
-              {isStreaming && (
-                <div className="mb-2 font-mono text-gray-500">Typing...</div>
-              )}
-              <ChatMessageItem
-                message={{
-                  role: 'model',
-                  content: incomingMessage,
-                }}
-                isLast={true}
-                offset={minScrollOffset.current}
-              />
-            </div>
-          )}
-
-          {isLoading && (
-            <ChatMessageItem
-              message={{
-                role: 'model',
-                content: 'Thinking...',
-              }}
-              isLast={true}
-              offset={minScrollOffset.current}
-              isLoading={isLoading}
-            />
-          )}
-        </div>
+        // Message list
+        <ChatMessageList
+          messages={messages}
+          lastUserMessageRef={lastUserMessageRef}
+          minScrollOffset={minScrollOffset}
+          incomingMessage={incomingMessage}
+          isStreaming={isStreaming}
+          isLoading={isLoading}
+        />
       ) : (
+        // Initial chat view
         <ChatStartScreen />
       )}
 
