@@ -24,6 +24,15 @@ export interface ChatMessageItemProps {
   isLoading?: boolean;
 }
 
+/**
+ * Props for the ChatMessageList component.
+ * @property {ChatMessage[]} messages - Array of chat messages to display.
+ * @property {React.RefObject<HTMLDivElement>} lastUserMessageRef - Ref to the last user message for scrolling.
+ * @property {React.RefObject<number>} minScrollOffset - Ref for minimum scroll offset.
+ * @property {string} [incomingMessage] - Optional incoming message content while streaming.
+ * @property {boolean} isStreaming - Whether a message is currently streaming.
+ * @property {boolean} isLoading - Whether a message is being sent or processed.
+ */
 export interface ChatMessageListProps {
   messages: ChatMessage[];
   lastUserMessageRef: React.RefObject<HTMLDivElement>;

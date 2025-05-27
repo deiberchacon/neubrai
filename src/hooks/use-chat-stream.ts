@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ChatMessage } from '../types/common.types';
-import { getChatHistory } from '../lib/helpers';
+import { getChatHistory, readStream } from '../lib/helpers';
 
 export const useChatStream = (
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
@@ -38,35 +38,17 @@ export const useChatStream = (
         .pipeThrough(new TextDecoderStream())
         .getReader();
 
-      // Handle the stream
+      // Start reading the stream
       if (readerRef.current) {
         setIsLoading(false);
         setIsStreaming(true);
 
-        let message = '';
-
-        // Read the stream until it's done
-        while (true) {
-          const { done, value } = await readerRef.current.read();
-
-          // If the stream is done, add the message to the chat
-          // and reset the incoming message
-          if (done) {
-            setMessages(prev => [...prev, { role: 'model', content: message }]);
-
-            setIsStreaming(false);
-            setIncomingMessage('');
-
-            break;
-          }
-
-          // If the stream is not done, append the value to the message
-          // and set the incoming message
-          if (value) {
-            message += value;
-            setIncomingMessage(message);
-          }
-        }
+        await readStream(
+          readerRef.current,
+          setMessages,
+          setIsStreaming,
+          setIncomingMessage
+        );
       }
     } catch (error: any) {
       setMessages(prev => [
