@@ -6,6 +6,7 @@ const Header = () => {
       <Link href="/" className="font-mono text-lg font-bold uppercase">
         Neubrai
       </Link>
+      
     </header>
   );
 };
