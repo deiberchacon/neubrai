@@ -30,9 +30,7 @@ const ChatMessageList = ({
       {/* Display the incoming message as it streams */}
       {incomingMessage && (
         <div>
-          {isStreaming && (
-            <div className="mb-2 font-mono text-gray-500">Typing...</div>
-          )}
+          {isStreaming && <div className="mb-2 font-mono text-gray-500">Typing...</div>}
           <ChatMessageItem
             message={{
               role: 'model',

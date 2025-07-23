@@ -6,7 +6,7 @@ import { ChatMessage } from '@/types/common.types';
  * @returns {Array<{ role: string, parts: Array<{ text: string }> }>} - Formatted chat history.
  */
 export const getChatHistory = (messages: ChatMessage[]) => {
-  return messages.map(message => ({
+  return messages.map((message) => ({
     role: message.role,
     parts: [{ text: message.content }],
   }));
@@ -23,13 +23,13 @@ export const readStream = async (
   reader: ReadableStreamDefaultReader<string>,
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setIsStreaming: React.Dispatch<React.SetStateAction<boolean>>,
-  setIncomingMessage: React.Dispatch<React.SetStateAction<string>>
+  setIncomingMessage: React.Dispatch<React.SetStateAction<string>>,
 ) => {
   let message = '';
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
-      setMessages(prev => [...prev, { role: 'model', content: message }]);
+      setMessages((prev) => [...prev, { role: 'model', content: message }]);
       setIsStreaming(false);
       setIncomingMessage('');
       break;

@@ -2,9 +2,7 @@ import React, { useRef, useState } from 'react';
 import { ChatMessage } from '../types/common.types';
 import { getChatHistory, readStream } from '../lib/helpers';
 
-export const useChatStream = (
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
-) => {
+export const useChatStream = (setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [incomingMessage, setIncomingMessage] = useState<string>('');
@@ -16,7 +14,7 @@ export const useChatStream = (
     setIsLoading(true);
 
     // Add user message to the chat
-    setMessages(prev => [...prev, { role: 'user', content: prompt }]);
+    setMessages((prev) => [...prev, { role: 'user', content: prompt }]);
 
     // Chat history for Multi-turn conversations
     const history = getChatHistory(messages);
@@ -34,24 +32,17 @@ export const useChatStream = (
       }
 
       // Stream the response
-      readerRef.current = response.body
-        .pipeThrough(new TextDecoderStream())
-        .getReader();
+      readerRef.current = response.body.pipeThrough(new TextDecoderStream()).getReader();
 
       // Start reading the stream
       if (readerRef.current) {
         setIsLoading(false);
         setIsStreaming(true);
 
-        await readStream(
-          readerRef.current,
-          setMessages,
-          setIsStreaming,
-          setIncomingMessage
-        );
+        await readStream(readerRef.current, setMessages, setIsStreaming, setIncomingMessage);
       }
     } catch (error: any) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { role: 'model', content: "Sorry I can't answer in this moment" },
       ]);

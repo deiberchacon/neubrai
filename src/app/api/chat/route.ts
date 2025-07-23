@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     // Call the Google Gemini API to create a chat session
     const chat = ai.chats.create({
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-2.5-flash',
       history: history,
       config: {
         systemInstruction:

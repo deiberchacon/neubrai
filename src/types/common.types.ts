@@ -55,3 +55,11 @@ export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   onCancelStream: () => void;
 }
+
+/**
+ * Represents the state of the theme preferences.
+ * @property {boolean} [darkMode] - Indicates if dark mode is enabled for the user.
+ */
+export interface ThemeState {
+  darkMode?: boolean;
+}

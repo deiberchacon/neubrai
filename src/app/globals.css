@@ -1,8 +1,16 @@
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Prose customizations */
 .scrollbar::-webkit-scrollbar-button {
   display: none;
 }
+
+.prose pre {  
+  padding: 0;  
+}  
 
 /* Example of a styled scrollbar without arrows */
 .scrollbar::-webkit-scrollbar {
@@ -10,13 +18,18 @@
 }
 
 .scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent rounded-full;
+  @apply rounded-full bg-transparent;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  @apply rounded-full bg-gray-300;
 }
 
 .scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
 }
+
+.prose code::before,  
+.prose code::after {  
+  content: none;  
+} 

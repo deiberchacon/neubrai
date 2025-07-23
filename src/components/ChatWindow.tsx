@@ -22,11 +22,7 @@ const ChatWindow: React.FC = () => {
     useChatStream(setMessages);
 
   // When a new user message is added, scroll to that message
-  const { minScrollOffset } = useScrollToLastMessage(
-    messages,
-    scrollableRef,
-    lastUserMessageRef
-  );
+  const { minScrollOffset } = useScrollToLastMessage(messages, scrollableRef, lastUserMessageRef);
 
   // Handler for sending a message
   const handleSendMessage = async (prompt: string) => {

@@ -24,9 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${dmSans.variable} ${geistMono.variable} overflow-y-hidden antialiased`}
-      >
+      <body className={`${dmSans.variable} ${geistMono.variable} overflow-y-hidden antialiased dark:bg-slate-900`}>
         {children}
       </body>
     </html>

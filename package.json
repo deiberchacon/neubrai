@@ -12,7 +12,8 @@
     "@google/genai": "^0.9.0",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.503.0",
-    "next": "15.3.1",
+    "next": "^15.4.2",
+    "persistent-context": "^1.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

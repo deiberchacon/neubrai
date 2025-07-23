@@ -1,8 +1,13 @@
 {
-  "trailingComma": "es5",
-  "tabWidth": 2,
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "printWidth": 100,
+  "proseWrap": "always",
+  "requirePragma": false,
   "semi": true,
   "singleQuote": true,
-  "arrowParens": "avoid",
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false
 }
